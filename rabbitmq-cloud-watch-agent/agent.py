@@ -49,4 +49,4 @@ if __name__ == "__main__":
             os.environ.get("PUG_BROKER_AMQP_PASSWORD"),
             "/",
             os.environ.get("PUG_BROKER_AMQP_METRIC"))
-        sleep(60 * 5)
+        sleep(os.getenv("PUG_BROKER_METRIC_PUSH_PERIOD", 5 * 60))
