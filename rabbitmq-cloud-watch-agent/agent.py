@@ -2,7 +2,7 @@
 from __future__ import with_statement, print_function
 
 from pyrabbit.api import Client
-from boto.ec2.cloudwatch import CloudWatchConnection
+from boto.ec2 import cloudwatch
 import os
 from time import sleep
 
@@ -31,7 +31,8 @@ def publish_queue_depth_to_cloudwatch(cwc, queue_name, depth, namespace):
 
 
 def publish_depths_to_cloudwatch(depths, namespace):
-    cwc = CloudWatchConnection(region=os.environ.get("AWS_CLOUD_WATCH_REGION"))
+    cwc = cloudwatch.connect_to_region(os.environ.get("AWS_CLOUD_WATCH_REGION"))
+    # cwc = CloudWatchConnection(region=os.environ.get("AWS_CLOUD_WATCH_REGION"))
     for queue in depths:
         publish_queue_depth_to_cloudwatch(cwc, queue, depths[queue], namespace)
 
