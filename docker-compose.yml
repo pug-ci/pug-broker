@@ -1,0 +1,13 @@
+version: '2'
+services:
+  cloud_watch_agent:
+    build: ./rabbitmq-cloud-watch-agent
+    links:
+      - rabbitmq
+    env_file: .env
+  rabbitmq:
+    build: ./rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
