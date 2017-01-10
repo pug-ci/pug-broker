@@ -2,7 +2,7 @@
 from __future__ import with_statement, print_function
 
 from pyrabbit.api import Client
-    from boto.ec2.cloudwatch import CloudWatchConnection
+from boto.ec2.cloudwatch import CloudWatchConnection
 import os
 from time import sleep
 
