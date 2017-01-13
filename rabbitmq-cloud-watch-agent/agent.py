@@ -2,14 +2,12 @@
 from __future__ import with_statement, print_function
 
 from pyrabbit.api import Client
+from pyrabbit import http
 from boto.ec2 import cloudwatch
 import os
 from time import sleep
 
-def get_queue_depths(host, username, password, vhost):
-    cl = Client(host, username, password)
-    if not cl.is_alive():
-        raise Exception("Failed to connect to rabbitmq")
+def get_queue_depths(cl, vhost):
     depths = {}
     queues = [q['name'] for q in cl.get_queues(vhost=vhost)]
     for queue in queues:
@@ -37,17 +35,33 @@ def publish_depths_to_cloudwatch(depths, namespace):
         publish_queue_depth_to_cloudwatch(cwc, queue, depths[queue], namespace)
 
 
-def get_queue_depths_and_publish_to_cloudwatch(host, username, password, vhost, namespace):
-    depths = get_queue_depths(host, username, password, vhost)
+def get_queue_depths_and_publish_to_cloudwatch(cl, vhost, namespace):
+    depths = get_queue_depths(cl, vhost)
     publish_depths_to_cloudwatch(depths, namespace)
 
 if __name__ == "__main__":
-    sleep(5)
+    host = os.environ.get("PUG_BROKER_AMQP_HOST")
+    username = os.environ.get("PUG_BROKER_AMQP_USERNAME")
+    password = os.environ.get("PUG_BROKER_AMQP_PASSWORD")
+
+    cl = Client(host, username, password)
+
+    connected = False
+    retries = 10
+    while not connected and retries > 0:
+        sleep(1)
+        print("Trying to connect...")
+        try:
+            if not cl.is_alive():
+                raise Exception("Failed to connect to rabbitmq")
+            connected = True
+        except http.NetworkError:
+            retries -= 1
+
+    print("ok")
     while True:
         get_queue_depths_and_publish_to_cloudwatch(
-            os.environ.get("PUG_BROKER_AMQP_HOST"),
-            os.environ.get("PUG_BROKER_AMQP_USERNAME"),
-            os.environ.get("PUG_BROKER_AMQP_PASSWORD"),
+            cl,
             "/",
             os.environ.get("PUG_BROKER_AMQP_METRIC"))
         sleep(int(os.getenv("PUG_BROKER_METRIC_PUSH_PERIOD", 5 * 60)))
